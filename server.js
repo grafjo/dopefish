@@ -52,7 +52,7 @@ bot.addListener('join', function (channel, nick, message) {
 bot.addListener('message#', function (nick, channel, text) {
 
     console.log(channel + '<' + nick + '>' + text);
-    var payload = {bot: bot, nick: nick, channel: channel};
+    var payload = {bot: bot, nick: nick, channel: channel, master: master};
 
     if (text.startsWith('!rauchen')) {
         smokoWarning(payload);
@@ -72,9 +72,43 @@ bot.addListener('message#', function (nick, channel, text) {
     } else if (text.toLowerCase().contains('wasser')) {
         waterDetector(payload);
     } else if (text.startsWith('!help')) {
-        pleaseHelp(params);
+        pleaseHelp(payload);
+    } else if (text.startsWith('!leave')) {
+        leaveChannel(payload);
     }
 });
+
+/**
+ * @param {Object} params.bot
+ * @param {String} params.nick
+ * @param {String} params.channel
+ * @param {String} params.master
+ */
+var leaveChannel = function (params) {
+
+    var bot = params.bot;
+    var nick = params.nick;
+    var channel = params.channel;
+    var master = params.master;
+
+    var lala = [
+        'so ... ich packs dann mal',
+        'pfüati gott',
+        'cya',
+        'pfüati',
+        'tschau',
+        'ich gehe nun zur spassseite -.-'
+    ];
+
+    if (nick === master) {
+        var index = getRandomInt(0, lala.length - 1);
+        bot.part(channel, lala[index], function () {
+            console.log('left channel ' + channel);
+        });
+    } else {
+        bot.say(nick, 'du hättest wohl gern, dass ich aus ' + channel + ' verschwinde!?');
+    }
+};
 
 /**
  * @param {Object} params.bot
