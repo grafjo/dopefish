@@ -1,164 +1,220 @@
 #!/bin/env node
-//  OpenShift sample Node application
-var express = require('express');
-var fs      = require('fs');
+
+var irc = require('irc');
+var botName = 'dopefish';
+var master = 'joo';
+
+var bot = new irc.Client('irc.synyx.de', botName, {
+    channels: ['#dopefish', '#fumarer'],
+    port: 6668,
+    userName: 'dopefish',
+    realName: 'dope as fish dude!'
+});
+
+bot.addListener('error', function (message) {
+    console.log('error: ', message);
+});
+
+bot.addListener('invite', function (channel, nick, message) {
+
+    console.log('received invite from ' + nick + ' into ' + channel);
+
+    if (nick === master) {
+        bot.join(channel, function () {
+            console.log('joined ' + channel);
+            bot.say(channel, "servus!");
+        });
+    } else {
+        bot.say(nick, 'nein, nein, nein');
+        bot.say(nick, 'im channel ' + channel + ' sind nur langweiler!');
+    }
+});
+
+bot.addListener('join', function (channel, nick, message) {
+
+    console.log(nick + ' joined ' + channel);
+
+    if (nick !== botName) {
+        var greeting;
+        if (nick === 'leo' || nick === 'NULLinger' || nick === 'Fabian') {
+            greeting = 'dieser ' + nick + ' schon wieder ... O_o';
+        } else if (nick.endsWith('1')) {
+            greeting = 'hallo ' + nick + '111einself!!!1111';
+        } else if (nick.endsWith('_')) {
+            greeting = 'hallo __' + nick + '___';
+        } else {
+            greeting = 'hallo ' + nick;
+        }
+        bot.say(channel, greeting);
+    }
+});
+
+bot.addListener('message#', function (nick, channel, text) {
+
+    console.log(channel + '<' + nick + '>' + text);
+    var payload = {bot: bot, nick: nick, channel: channel};
+
+    if (text.startsWith('!rauchen')) {
+        smokoWarning(payload);
+
+    } else if (text.startsWith('!bier')) {
+        beerTimeChecker(payload);
+
+    } else if (text.toLowerCase().contains('bier') ||
+        text.toLowerCase().contains('durst') ||
+        text.toLowerCase().contains('trink')) {
+
+        serveDrink(payload);
+
+    } else if (text.startsWith('[ANN]')) {
+        noiseDetector(payload);
+
+    } else if (text.toLowerCase().contains('wasser')) {
+        waterDetector(payload);
+    }
+});
+
+/**
+ * @param {Object} params.bot
+ * @param {String} params.nick
+ * @param {String} params.channel
+ */
+var waterDetector  = function (params) {
+
+    var bot = params.bot;
+    var nick = params.nick;
+    var channel = params.channel;
+
+    bot.say(channel, nick + ': h2o - nur im klo!');
+    serveDrink(params);
+};
+
+/**
+ * @param {Object} params.bot
+ * @param {String} params.channel
+ */
+var noiseDetector = function (params) {
+
+    var bot = params.bot;
+    var channel = params.channel;
+
+    bot.say(channel, 'wer will mich hier aufwecken? ich schlafe tief und fest!');
+    bot.action(channel, 'tzz tzzzzz tzzzzzzz tzzz tzzz tzzzzz ...');
+};
+
+/**
+ * @param {Object} params.bot
+ * @param {String} params.channel
+ */
+var beerTimeChecker = function (params) {
+
+    var bot = params.bot;
+    var channel = params.channel;
+
+    var currentHour = new Date().getUTCHours() + 2;
+    if (currentHour > 8 && currentHour < 16) {
+        bot.say(channel, 'kein bier vor vier');
+    } else {
+        bot.say(channel, 'bier in massen genießen - alles andere ist verantwortungslos!');
+    }
+};
+
+/**
+ * @param {Object} params.bot
+ * @param {String} params.channel
+ */
+var smokoWarning = function (params) {
+
+    var bot = params.bot;
+    var channel = params.channel;
+
+    var warnings = [
+        'Rauchen fügt Ihnen und den Menschen in Ihrer Umgebung erheblichen Schaden zu.',
+        'Rauchen kann tödlich sein.',
+        'Rauchen ist tödlich.',
+        'Raucher sterben früher',
+        'Rauchen lässt Ihre Haut altern.',
+        'Rauchen verursacht tödlichen Lungenkrebs.',
+        'Rauchen in der Schwangerschaft schadet Ihrem Kind.',
+        'Schützen Sie Kinder - lassen Sie sie nicht Ihren Tabakrauch einatmen!',
+        'Ihr Arzt oder Apotheker kann Ihnen dabei helfen, das Rauchen aufzugeben',
+        'Rauchen macht sehr schnell abhängig: Fangen Sie gar nicht erst an!',
+        'Wer das Rauchen aufgibt, verringert das Risiko tödlicher Herz- und Lungenerkrankungen',
+        'Rauchen kann zu einem langsamen und schmerzhaften Tod führen',
+        'Hier finden Sie Hilfe, wenn Sie das Rauchen aufgeben möchten: Tel. 06221-424200 Befragen Sie Ihren Arzt oder Apotheker',
+        'Rauchen kann zu Durchblutungsstörungen führen und verursacht Impotenz',
+        'Rauchen führt zur Verstopfung der Arterien und verursacht Herzinfarkte und Schlaganfälle.',
+        'Rauchen kann die Spermatozoen schädigen und schränkt die Fruchtbarkeit ein.',
+        'Rauchen enthält Benzol, Nitrosamine, Formaldehyd und Blausäure.'
+    ];
+
+    var index = getRandomInt(0, warnings.length - 1);
+    bot.action(channel, warnings[index]);
+};
 
 
 /**
- *  Define the sample application.
+ * @param {Object} params.bot
+ * @param {String} params.nick
+ * @param {String} params.channel
  */
-var SampleApp = function() {
+var serveDrink = function (params) {
 
-    //  Scope.
-    var self = this;
+    var bot = params.bot;
+    var nick = params.nick;
+    var channel = params.channel;
 
+    var fridge = [
+        'einen heißen jasmine tee',
+        'einen heißen kaba',
+        'ein glas v.o.d.k.a',
+        'ein kaltes bier',
+        'ein kaltes pils',
+        'eine tasse kaffee',
+        'ein kühles blondes',
+        'ein veganes apfelsaft-schorle',
+        'einen frisch gemixten mojito',
+        'einen mojito mit extra viel minze'
+    ];
 
-    /*  ================================================================  */
-    /*  Helper functions.                                                 */
-    /*  ================================================================  */
-
-    /**
-     *  Set up server IP address and port # using env variables/defaults.
-     */
-    self.setupVariables = function() {
-        //  Set the environment variables we need.
-        self.ipaddress = process.env.OPENSHIFT_NODEJS_IP;
-        self.port      = process.env.OPENSHIFT_NODEJS_PORT || 8080;
-
-        if (typeof self.ipaddress === "undefined") {
-            //  Log errors on OpenShift but continue w/ 127.0.0.1 - this
-            //  allows us to run/test the app locally.
-            console.warn('No OPENSHIFT_NODEJS_IP var, using 127.0.0.1');
-            self.ipaddress = "127.0.0.1";
-        };
-    };
+    // Fabian trinkt gerne jasmine tee
+    var drink = (nick === 'Fabian') ? 0 : getRandomInt(0, fridge.length - 1);
+    bot.action(channel, 'reicht ' + nick + ' ' + fridge[drink]);
+};
 
 
-    /**
-     *  Populate the cache.
-     */
-    self.populateCache = function() {
-        if (typeof self.zcache === "undefined") {
-            self.zcache = { 'index.html': '' };
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+};
+
+if (!String.prototype.startsWith) {
+    Object.defineProperty(String.prototype, 'startsWith', {
+        enumerable: false,
+        configurable: false,
+        writable: false,
+        value: function (searchString, position) {
+            position = position || 0;
+            return this.indexOf(searchString, position) === position;
         }
+    });
+}
 
-        //  Local cache for static content.
-        self.zcache['index.html'] = fs.readFileSync('./index.html');
-    };
-
-
-    /**
-     *  Retrieve entry (content) from cache.
-     *  @param {string} key  Key identifying content to retrieve from cache.
-     */
-    self.cache_get = function(key) { return self.zcache[key]; };
-
-
-    /**
-     *  terminator === the termination handler
-     *  Terminate server on receipt of the specified signal.
-     *  @param {string} sig  Signal to terminate on.
-     */
-    self.terminator = function(sig){
-        if (typeof sig === "string") {
-           console.log('%s: Received %s - terminating sample app ...',
-                       Date(Date.now()), sig);
-           process.exit(1);
+if (!String.prototype.endsWith) {
+    Object.defineProperty(String.prototype, 'endsWith', {
+        enumerable: false,
+        configurable: false,
+        writable: false,
+        value: function (searchString, position) {
+            position = position || this.length;
+            position = position - searchString.length;
+            var lastIndex = this.lastIndexOf(searchString);
+            return lastIndex !== -1 && lastIndex === position;
         }
-        console.log('%s: Node server stopped.', Date(Date.now()) );
+    });
+}
+
+if (!('contains' in String.prototype)) {
+    String.prototype.contains = function (str, startIndex) {
+        return -1 !== String.prototype.indexOf.call(this, str, startIndex);
     };
-
-
-    /**
-     *  Setup termination handlers (for exit and a list of signals).
-     */
-    self.setupTerminationHandlers = function(){
-        //  Process on exit and signals.
-        process.on('exit', function() { self.terminator(); });
-
-        // Removed 'SIGPIPE' from the list - bugz 852598.
-        ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
-         'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
-        ].forEach(function(element, index, array) {
-            process.on(element, function() { self.terminator(element); });
-        });
-    };
-
-
-    /*  ================================================================  */
-    /*  App server functions (main app logic here).                       */
-    /*  ================================================================  */
-
-    /**
-     *  Create the routing table entries + handlers for the application.
-     */
-    self.createRoutes = function() {
-        self.routes = { };
-
-        // Routes for /health, /asciimo and /
-        self.routes['/health'] = function(req, res) {
-            res.send('1');
-        };
-
-        self.routes['/asciimo'] = function(req, res) {
-            var link = "http://i.imgur.com/kmbjB.png";
-            res.send("<html><body><img src='" + link + "'></body></html>");
-        };
-
-        self.routes['/'] = function(req, res) {
-            res.setHeader('Content-Type', 'text/html');
-            res.send(self.cache_get('index.html') );
-        };
-    };
-
-
-    /**
-     *  Initialize the server (express) and create the routes and register
-     *  the handlers.
-     */
-    self.initializeServer = function() {
-        self.createRoutes();
-        self.app = express.createServer();
-
-        //  Add handlers for the app (from the routes).
-        for (var r in self.routes) {
-            self.app.get(r, self.routes[r]);
-        }
-    };
-
-
-    /**
-     *  Initializes the sample application.
-     */
-    self.initialize = function() {
-        self.setupVariables();
-        self.populateCache();
-        self.setupTerminationHandlers();
-
-        // Create the express server and routes.
-        self.initializeServer();
-    };
-
-
-    /**
-     *  Start the server (starts up the sample application).
-     */
-    self.start = function() {
-        //  Start the app on the specific interface (and port).
-        self.app.listen(self.port, self.ipaddress, function() {
-            console.log('%s: Node server started on %s:%d ...',
-                        Date(Date.now() ), self.ipaddress, self.port);
-        });
-    };
-
-};   /*  Sample Application.  */
-
-
-
-/**
- *  main():  Main code.
- */
-var zapp = new SampleApp();
-zapp.initialize();
-zapp.start();
-
+}

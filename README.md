@@ -1,3 +1,4 @@
-The OpenShift `nodejs` cartridge documentation can be found at:
+dopefish
+=========
 
-https://github.com/openshift/origin-server/tree/master/cartridges/openshift-origin-cartridge-nodejs/README.md
+dopefish is an hyper intelligent dolphine like flipper
