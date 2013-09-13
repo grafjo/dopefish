@@ -71,8 +71,25 @@ bot.addListener('message#', function (nick, channel, text) {
 
     } else if (text.toLowerCase().contains('wasser')) {
         waterDetector(payload);
+    } else if (text.startsWith('!help')) {
+        pleaseHelp(params);
     }
 });
+
+/**
+ * @param {Object} params.bot
+ * @param {String} params.nick
+ */
+var pleaseHelp  = function (params) {
+
+    var bot = params.bot;
+    var nick = params.nick;
+
+    bot.say(nick, 'du brauchst also hilfe?');
+    bot.say(nick, 'hm ...');
+    bot.say(nick, 'vielleicht hilft dir ja mein source code weiter ...');
+    bot.say(nick, 'git clone https://github.com/grafjo/dopefish.git');
+};
 
 /**
  * @param {Object} params.bot
